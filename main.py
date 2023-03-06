@@ -4,7 +4,6 @@ from functools import partial
 from main_window import Ui_MainWindow
 from database import Database
 from PySide6.QtGui import QFont, QMouseEvent 
-import sys
 
 class MainWindow(QMainWindow):
     def __init__(self):
@@ -16,6 +15,7 @@ class MainWindow(QMainWindow):
         self.del_list=[]
         self.done_list = []
         self.labels = []
+        self.priority_list = []
         self.db = Database()
         self.read_from_database()
         self.check()
@@ -27,6 +27,7 @@ class MainWindow(QMainWindow):
         self.ui.btn_new_task.clicked.connect(self.new_task)
         self.ui.btn_sort.clicked.connect(self.sort_tasks)
         self.ui.comboBox.activated.connect(self.current_text)
+        
 
 
     def current_text(self, _): # We receive the index, but don't use it.
@@ -56,13 +57,12 @@ class MainWindow(QMainWindow):
 
 
 
-
     def read_from_database(self):
         global tasks
         tasks = self.db.get_tasks_from_db()
         self.read_data(tasks)
         print(tasks)
-  
+
     def read_data(self , tasks):
         global new_checkbox  , recyclebin_btn , new_label , priority
         for i in range(len(tasks)) :
@@ -72,11 +72,11 @@ class MainWindow(QMainWindow):
             new_label.setText(tasks[i][1]) 
             priority = QLabel()
             priority.setText(tasks[i][4])
-            
+            new_label_2 = QLabel()
+            new_label_2.setText(tasks[i][2]) #description
 
             self.done_list.append(tasks[i][3])
             print(self.done_list)
-
 
             recyclebin_btn = QPushButton("🗑")
             recyclebin_btn.setFixedWidth(70)
@@ -105,26 +105,19 @@ class MainWindow(QMainWindow):
             self.labels.append(new_label)
             self.mylist.append(new_checkbox)
             self.del_list.append(recyclebin_btn)
-
-
-
-            # new_label_2 = QLabel()
-            # new_label_2.setText(tasks[i][2]) #description
-
+            self.priority_list.append(priority)
 
             new_checkbox.toggled.connect(self.check)
-            #recyclebin_btn.clicked.connect(partial(self.delete , i ))
+            recyclebin_btn.clicked.connect(partial(self.delete ,i ))
 
-            new_label.setToolTip(tasks[i][5] + tasks[i][6])
-
+            new_label.setToolTip(QCoreApplication.translate("MainWindow", f"<html><head/><body><p>{tasks[i][5]} <br> {tasks[i][6]} <br> {tasks[i][2]}</p></body></html>", None))
+            priority.setToolTip(QCoreApplication.translate("MainWindow", f"<html><head/><body><p>{tasks[i][5]} <br> {tasks[i][6]} <br> {tasks[i][2]}</p></body></html>", None))
 
             self.ui.gl_tasks2.addWidget(new_checkbox ,  i  , 1 )  
             self.ui.gl_tasks2.addWidget(new_label , i , 2)
             self.ui.gl_tasks2.addWidget(priority , i  ,3 )
             self.ui.gl_tasks2.addWidget(recyclebin_btn , i , 4)
         
-   
-
         c = 0
         for item in self.done_list: 
             if item == '1' :
@@ -133,7 +126,6 @@ class MainWindow(QMainWindow):
             else :
                 self.mylist[c].setChecked(False)
             c+= 1
-
 
 
 
@@ -150,30 +142,22 @@ class MainWindow(QMainWindow):
         for i in reversed(range(self.ui.gl_tasks2.count())): 
             self.ui.gl_tasks2.itemAt(i).widget().setParent(None)
 
-
         sorted_list = self.db.sort()
-        
         task_list = []
         for task in sorted_list :
-             #if task[3] == 0  :
-                 task_list.append(task)
-            
+                 task_list.append(task)          
         print(task_list )
         tasks = task_list
         self.read_data(tasks)
 
 
-
     def delete(self , i ):
-        for btn in self.del_list :
-            if self.del_list[i].isChecked():
-                id = tasks[i][0]
-                self.db.remove_task(id)
-            i+=1
-
-
-
-
+        if self.db.remove_task(i+1):
+            for btn in self.del_list :
+                 self.del_list[i].deleteLater()
+            self.labels[i].clear()
+            #self.mylist[i].clear()
+            self.priority_list[i].clear()
 
 if __name__ == "__main__" :
     app = QApplication([])
