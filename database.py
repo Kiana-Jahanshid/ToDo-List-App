@@ -21,9 +21,12 @@ class Database :
 
 
     def remove_task(self , id):
-        self.cursor.execute(f"DELETE FROM tasks WHERE ID={id}")
-        self.con.commit()
-
+        try:
+            self.cursor.execute(f"DELETE FROM tasks WHERE ID={id}")
+            self.con.commit()
+            return True
+        except:
+            return False
 
 
     def task_done(self , task_title):
