@@ -247,3 +247,4 @@ class Ui_MainWindow(object):
         self.btn_sort.setText(QCoreApplication.translate("MainWindow", u"SORT Tasks ", None))
     # retranslateUi
 
+ 
